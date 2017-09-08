@@ -28,26 +28,12 @@ protected:
 		_view = glm::translate(glm::mat4(1.0), glm::vec3(0.0f, 0.0f, -4.0f));
 		_proj = glm::perspective(glm::radians(45.0f), 800.f / 600.f, 0.1f, 100.0f);
 
-		GLuint vertexShader = CreateShader(GL_VERTEX_SHADER, diffuseVs);
-		if (!CheckShader(vertexShader))
-			 return false;
-
-		GLuint fragmentShader = CreateShader(GL_FRAGMENT_SHADER, diffuseFs);
-		if (!CheckShader(fragmentShader))
-			return false;
-	
-		_program = CreateProgram(vertexShader, fragmentShader);
-
-		DeleteShader(vertexShader);
-		DeleteShader(fragmentShader);
-
-		UseProgram(_program);
-
-		SetUniform(_program, "model", _model);
-		SetUniform(_program, "view", _view);
-		SetUniform(_program, "projection", _proj);
-		
-		UnuseProgram();
+		_program = std::make_shared<ShaderProgram>(diffuseVs, diffuseFs);
+		_program->Use();
+		_program->SetUniform("model", _model);
+		_program->SetUniform("view", _view);
+		_program->SetUniform("projection", _proj);
+		_program->Unuse();
 
 		glGenVertexArrays(1, &_meshVao);
 		glBindVertexArray(_meshVao);
@@ -85,15 +71,13 @@ protected:
 	{
 		glDeleteVertexArrays(1, &_meshVao);
 		glDeleteBuffers(1, &_vertexBuffer);
-
-		glDeleteProgram(_program);
 	}
 
 	virtual void OnRender()
 	{
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		UseProgram(_program);
+		_program->Use();
 		glBindVertexArray(_meshVao);
 
 		glActiveTexture(GL_TEXTURE0);
@@ -102,7 +86,7 @@ protected:
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
 		glBindVertexArray(0);
-		UnuseProgram();
+		_program->Unuse();
 	}
 
 private:
@@ -110,7 +94,7 @@ private:
 	GLuint _meshVao = 0;
 
 	GLuint _tex;
-	GLuint _program;
+	ProgramPtr _program;
 	
 	glm::mat4 _model;
 	glm::mat4 _view;

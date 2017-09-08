@@ -1,6 +1,18 @@
 #include "Includes.h"
 #include "Shader.h"
 
+void CheckShader(GLuint glShader)
+{
+	GLint success;
+	GLchar infoLog[512];
+	glGetShaderiv(glShader, GL_COMPILE_STATUS, &success);
+	if (!success)
+	{
+		glGetShaderInfoLog(glShader, 512, NULL, infoLog);
+		printf("Shader compilation failed - %s\n", infoLog);
+	}
+}
+
 GLuint CreateShader(GLenum type, const char* source)
 {
 	auto glShader = glCreateShader(type);
@@ -10,48 +22,40 @@ GLuint CreateShader(GLenum type, const char* source)
 	return glShader;
 }
 
-void DeleteShader(GLuint glShader)
+ShaderProgram::ShaderProgram(const char* vsSource, const char* fsSource)
 {
-	glDeleteShader(glShader);
-}
+	GLuint vertexShader = CreateShader(GL_VERTEX_SHADER, vsSource);
+	GLuint fragmentShader = CreateShader(GL_FRAGMENT_SHADER, fsSource);
 
-bool CheckShader(GLuint glShader)
-{
+	_glProgram = glCreateProgram();
+	glAttachShader(_glProgram, vertexShader);
+	glAttachShader(_glProgram, fragmentShader);
+	glLinkProgram(_glProgram);
+
 	GLint success;
 	GLchar infoLog[512];
-	glGetShaderiv(glShader, GL_COMPILE_STATUS, &success);
+	glGetProgramiv(_glProgram, GL_LINK_STATUS, &success);
 	if (!success)
 	{
-		glGetShaderInfoLog(glShader, 512, NULL, infoLog);
-		printf("Shader compilation failed - %s\n", infoLog);
-		return false;
+		glGetProgramInfoLog(_glProgram, 512, NULL, infoLog);
+		printf("Program linking failed - %s\n", infoLog);
 	}
-
-	return true;
+	glDeleteShader(vertexShader);
+	glDeleteShader(fragmentShader);
 }
 
-GLuint CreateProgram(GLuint vertexShader, GLuint fragmentShader)
+void ShaderProgram::Use()
 {
-	auto shaderProgram = glCreateProgram();
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-	glLinkProgram(shaderProgram);
-
-	return shaderProgram;
+	glUseProgram(_glProgram);
 }
 
-void UseProgram(GLuint glProgram)
-{
-	glUseProgram(glProgram);
-}
-
-void UnuseProgram()
+void ShaderProgram::Unuse()
 {
 	glUseProgram(0);
 }
 
-void SetUniform(GLuint glProgram, const char* name, const glm::mat4& mat)
+void ShaderProgram::SetUniform(const char* name, const glm::mat4& mat)
 {
-	auto transformLoc = glGetUniformLocation(glProgram, name);
+	auto transformLoc = glGetUniformLocation(_glProgram, name);
 	glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(mat));
 }

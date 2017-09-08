@@ -22,11 +22,17 @@ static const GLchar* diffuseFs = "#version 330 core\n"
 "color = texture(ourTexture, TexCoord);\n"
 "}\n\0";
 
-GLuint CreateShader(GLenum type, const char* source);
-void DeleteShader(GLuint glShader);
-bool CheckShader(GLuint glShader);
+struct ShaderProgram final
+{
+	ShaderProgram(const char* vsSource, const char* fsSource);
+	~ShaderProgram() {}
 
-GLuint CreateProgram(GLuint vertexShader, GLuint fragmentShader);
-void UseProgram(GLuint glProgram);
-void UnuseProgram();
-void SetUniform(GLuint glProgram, const char* name, const glm::mat4& mat);
+	void Use();
+	void Unuse();
+	
+	void SetUniform(const char* name, const glm::mat4& mat);
+	
+private:
+	GLuint _glProgram;
+};
+using ProgramPtr = std::shared_ptr<ShaderProgram>;
