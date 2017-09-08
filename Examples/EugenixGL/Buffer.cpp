@@ -1,13 +1,30 @@
 #include "Includes.h"
+
 #include "Buffer.h"
 
-GLuint CreateBuffer(GLenum type, const void* mem, size_t size)
+Buffer::Buffer(BufferTarget type)
 {
-	GLuint glBuffer;
+	_type = type;
+	glGenBuffers(1, &_glBuffer);
+}
 
-	glGenBuffers(1, &glBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, glBuffer);
-	glBufferData(GL_ARRAY_BUFFER, size, mem, GL_STATIC_DRAW);
+Buffer::~Buffer()
+{
+	glDeleteBuffers(1, &_glBuffer);
+}
 
-	return glBuffer;
+void Buffer::UploadData(const void* mem, size_t size)
+{
+	Bind();
+	glBufferData(static_cast<GLenum>(_type), size, mem, GL_STATIC_DRAW);
+}
+
+void Buffer::Bind()
+{
+	glBindBuffer(static_cast<GLenum>(_type), _glBuffer);
+}
+
+void Buffer::Unbind()
+{
+	glBindBuffer(static_cast<GLenum>(_type), 0);
 }

@@ -24,6 +24,28 @@ GLuint CreateShader(GLenum type, const char* source)
 	return glShader;
 }
 
+static std::map<std::string, GLint> GetUniformLocations(GLuint program)
+{
+	int numUni = -1;
+	glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &numUni);
+	
+	std::map<std::string, GLint> outUniforms;
+	
+	for (int i = 0; i < numUni; ++i)
+	{
+		int namelen;
+		int num;
+		GLenum type;
+		char name[128];
+		
+		glGetActiveUniform(program, static_cast<GLuint>(i), sizeof(name) - 1, &namelen, &num, &type, name);
+		name[namelen] = 0;
+		GLuint location = glGetUniformLocation(program, name);
+		outUniforms[name] = location;
+	}
+	return outUniforms;
+}
+
 ShaderProgram::ShaderProgram(const char* vsSource, const char* fsSource)
 {
 	GLuint vertexShader = CreateShader(GL_VERTEX_SHADER, vsSource);
@@ -46,20 +68,70 @@ ShaderProgram::ShaderProgram(const char* vsSource, const char* fsSource)
 	}
 	glDeleteShader(vertexShader);
 	glDeleteShader(fragmentShader);
+
+	_uniformLocations = GetUniformLocations(_glProgram);
 }
 
-void ShaderProgram::Use()
+ShaderProgram::~ShaderProgram()
+{
+	glDeleteProgram(_glProgram);
+}
+
+void ShaderProgram::Bind()
 {
 	glUseProgram(_glProgram);
 }
 
-void ShaderProgram::Unuse()
+void ShaderProgram::Unbind()
 {
 	glUseProgram(0);
 }
 
 void ShaderProgram::SetUniform(const char* name, const glm::mat4& mat)
 {
-	auto transformLoc = glGetUniformLocation(_glProgram, name);
-	glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(mat));
+	Bind();
+	glUniformMatrix4fv(_uniformLocations[name], 1, GL_FALSE, glm::value_ptr(mat));
+	Unbind();
 }
+
+namespace ShaderEnv
+{
+	namespace Defaults
+	{
+		GLuint currentProgram = -1;
+
+		ProgramPtr SimpleDiffuse()
+		{
+			static ProgramPtr simpleDiffuseProgram = nullptr;
+			if (simpleDiffuseProgram == nullptr)
+			{
+				const char* vsSource = R"(
+				#version 330 core
+				layout (location = 0) in vec3 position;
+				layout (location = 1) in vec2 texCoord;
+				uniform mat4 mvp;
+				out vec2 TexCoord;
+				void main()
+				{
+					gl_Position = mvp * vec4(position, 1.0f);
+					TexCoord = texCoord;
+				})";
+
+				const char* fsSource = R"(
+				#version 330 core
+				in vec2 TexCoord;
+				out vec4 color;
+				uniform sampler2D ourTexture;
+				void main()
+				{
+					color = texture(ourTexture, TexCoord);
+				})";
+
+				simpleDiffuseProgram = std::make_shared<ShaderProgram>(vsSource, fsSource);
+				//glBindAttribLocation(simpleDiffuseProgram, StandartAttribs::PositionAttrib, "position");
+				//glBindAttribLocation(simpleDiffuseProgram, StandartAttribs::UvAttrib, "uv");
+				return simpleDiffuseProgram;
+			}
+		}
+	} // namespace Defaults
+} // namespace ShaderEnv

@@ -353,12 +353,18 @@ namespace Eugenix
 #endif // EUGENIX_OPENGL
 		}
 
-		int EugenixMain()
+		const DisplaySetup& Setup()
 		{
-			return 0;
+			return _setup;
 		}
 
 	} // namespace Runtime
+
+	int EugenixMain()
+	{
+		return 0;
+	}
+
 } // namespace Eugenix
 
 #endif // EUGENIX_WINDOWS

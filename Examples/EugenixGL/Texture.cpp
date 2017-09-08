@@ -1,35 +1,44 @@
-#define STB_IMAGE_IMPLEMENTATION
-#include "../3rdParty/stb_image.h"
-
 #include "Includes.h"
+#include "Image.h"
 #include "Texture.h"
 
-GLuint CreateTexture(const std::string& name)
+Texture::Texture()
 {
-	GLuint _tex;
+	glGenTextures(1, &_glTexture);
+}
 
-	int width, height, comp;
-	unsigned char* data = stbi_load(name.c_str(), &width, &height, &comp, STBI_rgb);
+Texture::~Texture()
+{
+	glDeleteTextures(1, &_glTexture);
+}
 
-	glGenTextures(1, &_tex);
-	glBindTexture(GL_TEXTURE_2D, _tex);
+void Texture::UploadData(const ImagePtr& image)
+{
+	Bind();
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// Set texture wrapping to GL_REPEAT
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-	if (comp == 3)
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-	else if (comp == 4)
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	if (image->Comp() == 3)
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image->Width(), image->Height(), 0, GL_RGB, GL_UNSIGNED_BYTE, image->Data().data());
+	else if (image->Comp() == 4)
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image->Width(), image->Height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, image->Data().data());
 
 	glGenerateMipmap(GL_TEXTURE_2D);
 
-	stbi_image_free(data);
+	Unbind();
+}
 
+void Texture::Bind()
+{
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, _glTexture);
+}
+
+void Texture::Unbind()
+{
 	glBindTexture(GL_TEXTURE_2D, 0);
-
-	return _tex;
 }
