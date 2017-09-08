@@ -19,11 +19,6 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 	////	glfwSetWindowShouldClose(window, GL_TRUE);
 }
 
-static void resize_callback(GLFWwindow* window, int width, int height)
-{
-	////glViewport(0, 0, width, height);
-}
-
 static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
 }
@@ -65,6 +60,9 @@ namespace Eugenix
 			}
 
 			glfwMakeContextCurrent(_window);
+
+			glfwSetKeyCallback(_window, key_callback);
+			glfwSetMouseButtonCallback(_window, mouse_button_callback);
 
 #ifdef EUGENIX_OPENGL
 			if (!EugenixGL::Init())
