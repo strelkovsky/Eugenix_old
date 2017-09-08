@@ -4,12 +4,14 @@
 void CheckShader(GLuint glShader)
 {
 	GLint success;
-	GLchar infoLog[512];
 	glGetShaderiv(glShader, GL_COMPILE_STATUS, &success);
 	if (!success)
 	{
-		glGetShaderInfoLog(glShader, 512, NULL, infoLog);
-		printf("Shader compilation failed - %s\n", infoLog);
+		GLint infoLogLength;
+		glGetShaderiv(glShader, GL_INFO_LOG_LENGTH, &infoLogLength);
+		std::vector<char> infoLog(std::max(infoLogLength, int(1)));
+		glGetShaderInfoLog(glShader, 512, NULL, infoLog.data());
+		printf("Shader compilation failed - %s\n", infoLog.data());
 	}
 }
 
@@ -33,12 +35,14 @@ ShaderProgram::ShaderProgram(const char* vsSource, const char* fsSource)
 	glLinkProgram(_glProgram);
 
 	GLint success;
-	GLchar infoLog[512];
 	glGetProgramiv(_glProgram, GL_LINK_STATUS, &success);
 	if (!success)
 	{
-		glGetProgramInfoLog(_glProgram, 512, NULL, infoLog);
-		printf("Program linking failed - %s\n", infoLog);
+		GLint infoLogLength;
+		glGetProgramiv(_glProgram, GL_INFO_LOG_LENGTH, &infoLogLength);
+		std::vector<char> infoLog(std::max(infoLogLength, int(1)));
+		glGetProgramInfoLog(_glProgram, 512, NULL, infoLog.data());
+		printf("Program linking failed - %s\n", infoLog.data());
 	}
 	glDeleteShader(vertexShader);
 	glDeleteShader(fragmentShader);

@@ -7,6 +7,7 @@
 #include <../3rdParty/glm/gtc/matrix_transform.hpp>
 #include <../3rdParty/glm/gtc/type_ptr.hpp>
 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <vector>
