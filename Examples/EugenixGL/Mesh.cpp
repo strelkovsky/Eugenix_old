@@ -1,4 +1,2 @@
-#include "../3rdParty/glew/include/gl/glew.h"
-#include <vector>
-
+#include "Includes.h"
 #include "Mesh.h"

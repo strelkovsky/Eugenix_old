@@ -1,11 +1,7 @@
-#define GLEW_STATIC
-#include "../3rdParty/glew/include/gl/glew.h"
-
-#include <string>
-
 #define STB_IMAGE_IMPLEMENTATION
 #include "../3rdParty/stb_image.h"
 
+#include "Includes.h"
 #include "Texture.h"
 
 GLuint CreateTexture(const std::string& name)

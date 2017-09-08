@@ -1,5 +1,4 @@
-#include "../3rdParty/glew/include/gl/glew.h"
-
+#include "Includes.h"
 #include "Buffer.h"
 
 GLuint CreateBuffer(GLenum type, const void* mem, size_t size)
