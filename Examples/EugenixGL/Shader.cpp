@@ -1,10 +1,12 @@
 #include "Includes.h"
+
 #include "Shader.h"
 
 void CheckShader(GLuint glShader)
 {
 	GLint success;
 	glGetShaderiv(glShader, GL_COMPILE_STATUS, &success);
+
 	if (!success)
 	{
 		GLint infoLogLength;
@@ -21,6 +23,8 @@ GLuint CreateShader(GLenum type, const char* source)
 	glShaderSource(glShader, 1, &source, nullptr);
 	glCompileShader(glShader);
 
+	CheckShader(glShader);
+
 	return glShader;
 }
 
@@ -28,16 +32,16 @@ static std::map<std::string, GLint> GetUniformLocations(GLuint program)
 {
 	int numUni = -1;
 	glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &numUni);
-	
+
 	std::map<std::string, GLint> outUniforms;
-	
+
 	for (int i = 0; i < numUni; ++i)
 	{
 		int namelen;
 		int num;
 		GLenum type;
 		char name[128];
-		
+
 		glGetActiveUniform(program, static_cast<GLuint>(i), sizeof(name) - 1, &namelen, &num, &type, name);
 		name[namelen] = 0;
 		GLuint location = glGetUniformLocation(program, name);
@@ -45,6 +49,48 @@ static std::map<std::string, GLint> GetUniformLocations(GLuint program)
 	}
 	return outUniforms;
 }
+
+namespace ShaderEnv
+{
+	GLuint currentProgram = -1;
+
+	namespace Defaults
+	{
+		ProgramPtr SimpleDiffuse()
+		{
+			static ProgramPtr simpleDiffuseProgram = nullptr;
+			if (simpleDiffuseProgram == nullptr)
+			{
+				const char* vsSource = R"(
+				#version 330 core
+				layout (location = 0) in vec3 position;
+				layout (location = 1) in vec2 texCoord;
+				uniform mat4 mvp;
+				out vec2 TexCoord;
+				void main()
+				{
+					gl_Position = mvp * vec4(position, 1.0f);
+					TexCoord = texCoord;
+				})";
+
+				const char* fsSource = R"(
+				#version 330 core
+				in vec2 TexCoord;
+				out vec4 color;
+				uniform sampler2D ourTexture;
+				void main()
+				{
+					color = texture(ourTexture, TexCoord);
+				})";
+
+				simpleDiffuseProgram = std::make_shared<ShaderProgram>(vsSource, fsSource);
+				//glBindAttribLocation(simpleDiffuseProgram, StandartAttribs::PositionAttrib, "position");
+				//glBindAttribLocation(simpleDiffuseProgram, StandartAttribs::UvAttrib, "uv");
+			}
+			return simpleDiffuseProgram;
+		}
+	} // namespace Defaults
+} // namespace ShaderEnv
 
 ShaderProgram::ShaderProgram(const char* vsSource, const char* fsSource)
 {
@@ -89,49 +135,8 @@ void ShaderProgram::Unbind()
 
 void ShaderProgram::SetUniform(const char* name, const glm::mat4& mat)
 {
-	Bind();
+	if (ShaderEnv::currentProgram != _glProgram)
+		Bind();
+
 	glUniformMatrix4fv(_uniformLocations[name], 1, GL_FALSE, glm::value_ptr(mat));
-	Unbind();
 }
-
-namespace ShaderEnv
-{
-	namespace Defaults
-	{
-		GLuint currentProgram = -1;
-
-		ProgramPtr SimpleDiffuse()
-		{
-			static ProgramPtr simpleDiffuseProgram = nullptr;
-			if (simpleDiffuseProgram == nullptr)
-			{
-				const char* vsSource = R"(
-				#version 330 core
-				layout (location = 0) in vec3 position;
-				layout (location = 1) in vec2 texCoord;
-				uniform mat4 mvp;
-				out vec2 TexCoord;
-				void main()
-				{
-					gl_Position = mvp * vec4(position, 1.0f);
-					TexCoord = texCoord;
-				})";
-
-				const char* fsSource = R"(
-				#version 330 core
-				in vec2 TexCoord;
-				out vec4 color;
-				uniform sampler2D ourTexture;
-				void main()
-				{
-					color = texture(ourTexture, TexCoord);
-				})";
-
-				simpleDiffuseProgram = std::make_shared<ShaderProgram>(vsSource, fsSource);
-				//glBindAttribLocation(simpleDiffuseProgram, StandartAttribs::PositionAttrib, "position");
-				//glBindAttribLocation(simpleDiffuseProgram, StandartAttribs::UvAttrib, "uv");
-				return simpleDiffuseProgram;
-			}
-		}
-	} // namespace Defaults
-} // namespace ShaderEnv

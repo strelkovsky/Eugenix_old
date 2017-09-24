@@ -7,11 +7,11 @@ struct ShaderProgram final
 
 	void Bind();
 	void Unbind();
-	
+
 	void SetUniform(const char* name, const glm::mat4& mat);
-	
+
 private:
-	GLuint _glProgram;
+	GLuint _glProgram = 0;
 	std::map<std::string, GLint> _uniformLocations;
 };
 using ProgramPtr = std::shared_ptr<ShaderProgram>;

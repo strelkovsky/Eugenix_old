@@ -5,6 +5,7 @@ Mesh::Mesh(const BufferPtr& vertexBuffer, const std::vector<VertexAttribute>& ve
 {
 	_vertexBuffer = vertexBuffer;
 	_indexBuffer = indexBuffer;
+	_indexCount = indexCount;
 
 	const size_t vertexSize = std::accumulate(vertexAttributes.begin(), vertexAttributes.end(), 0,
 		[](size_t size, VertexAttribute attribute) { return size + VertexAttribute::GetTypeSize(attribute.GetAttribType()); });
